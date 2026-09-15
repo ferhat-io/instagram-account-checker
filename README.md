@@ -18,10 +18,10 @@ Open a terminal and navigate to the script's directory. Then run the script usin
 
     python checker.py
 
-Replace `checker.py` with the actual name of your Python script.
+Requests are sent one at a time with a short delay in between (`REQUEST_DELAY_SECONDS` in `checker.py`, default 2s) to avoid getting rate-limited by Instagram.
 
 4. **View the Results:**
-The script will display whether each username is taken or available. If a username is taken, it will show the profile URL. If a username is available, it will indicate that the username is available.
+Each checked username is appended to `results.txt` as `username - taken` or `username - free`, and removed from `usernames.txt`. If a check fails (network error, rate-limit, ...) the username stays in `usernames.txt` so the next run retries it. Progress is also printed to the terminal as the script runs.
 
 ## Disclaimer
 

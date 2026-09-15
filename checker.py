@@ -1,6 +1,8 @@
+import time
 import requests
 from bs4 import BeautifulSoup
-import concurrent.futures
+
+REQUEST_DELAY_SECONDS = 2
 
 def check_instagram_username(username):
     base_url = f"https://www.instagram.com/{username}/"
@@ -26,20 +28,31 @@ def check_instagram_username(username):
 
 def main():
     usernames_file = "usernames.txt"  # Replace with the actual name of your .txt file containing usernames
+    results_file = "results.txt"  # Tested usernames are appended here as "username - free"/"username - taken"
 
     with open(usernames_file, "r") as file:
-        usernames = file.read().splitlines()
+        usernames = [line.strip() for line in file if line.strip()]
 
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        results = list(executor.map(check_instagram_username, usernames))
+    unresolved = []
+    with open(results_file, "a") as results:
+        for i, username in enumerate(usernames):
+            exists, profile_url = check_instagram_username(username)
 
-    for username, (exists, profile_url) in zip(usernames, results):
-        if exists is True:
-            print(f"Username '{username}' is taken. Profile: {profile_url}")
-        elif exists is False:
-            print(f"Username '{username}' is available.")
-        else:
-            print(f"Username '{username}': could not verify (request failed or was blocked).")
+            if exists is True:
+                print(f"Username '{username}' is taken. Profile: {profile_url}")
+                results.write(f"{username} - taken\n")
+            elif exists is False:
+                print(f"Username '{username}' is available.")
+                results.write(f"{username} - free\n")
+            else:
+                print(f"Username '{username}': could not verify (request failed or was blocked), left in {usernames_file} for a retry.")
+                unresolved.append(username)
+
+            if i < len(usernames) - 1:
+                time.sleep(REQUEST_DELAY_SECONDS)
+
+    with open(usernames_file, "w") as file:
+        file.writelines(f"{username}\n" for username in unresolved)
 
 if __name__ == "__main__":
     main()
