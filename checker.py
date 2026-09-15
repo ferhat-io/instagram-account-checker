@@ -11,9 +11,9 @@ def check_instagram_username(username):
 
         if response.status_code == 200:
             soup = BeautifulSoup(response.text, 'html.parser')
-            title_tag = soup.find('title')
+            og_title = soup.find('meta', property='og:title')
 
-            if title_tag and "Page not found" in title_tag.get_text():
+            if og_title is None:
                 return False, None
             else:
                 return True, base_url
@@ -33,11 +33,13 @@ def main():
     with concurrent.futures.ThreadPoolExecutor() as executor:
         results = list(executor.map(check_instagram_username, usernames))
 
-    for username, (is_available, profile_url) in zip(usernames, results):
-        if is_available:
+    for username, (exists, profile_url) in zip(usernames, results):
+        if exists is True:
             print(f"Username '{username}' is taken. Profile: {profile_url}")
-        else:
+        elif exists is False:
             print(f"Username '{username}' is available.")
+        else:
+            print(f"Username '{username}': could not verify (request failed or was blocked).")
 
 if __name__ == "__main__":
     main()
